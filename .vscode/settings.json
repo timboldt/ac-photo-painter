@@ -1,0 +1,5 @@
+{
+    "C_Cpp.default.includePath": [
+        "/home/tboldt/.arduino15/packages/rp2040/hardware/rp2040/**"
+    ]
+}
