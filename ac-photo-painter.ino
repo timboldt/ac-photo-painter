@@ -1,4 +1,8 @@
 #include <Arduino.h>
+#include <PCF85063A.h>
+#include <time.h>
+
+PCF85063A rtc(Wire1);
 
 // Original C code behavior:
 //
@@ -40,6 +44,8 @@ const uint32_t RED_LED = 25;       // Activity LED: red.
 const uint32_t GREEN_LED = 26;     // Power LED: green.
 
 void setup() {
+    analogReadResolution(12);
+
     pinMode(CHARGE_STATE, INPUT_PULLUP);
     pinMode(USER_BUTTON, INPUT_PULLUP);
     pinMode(PWR_MODE, INPUT);
@@ -53,9 +59,34 @@ void setup() {
 
     pinMode(GREEN_LED, OUTPUT);
     digitalWrite(GREEN_LED, HIGH);
+
+    Wire1.setSDA(14);
+    Wire1.setSCL(15);
+    Wire1.begin();
+
+    // Temporary: Set the time.
+    // struct tm now_tm;
+    // now_tm.tm_year = 2025 - 1900;
+    // now_tm.tm_mon = 3 - 1;  // It needs to be '3' if April
+    // now_tm.tm_mday = 27;
+    // now_tm.tm_hour = 22;
+    // now_tm.tm_min = 7;
+    // now_tm.tm_sec = 0;
+    // rtc.set(&now_tm);
 }
 
 void loop() {
+    time_t current_time = 0;
+
+    current_time = rtc.time(NULL);
+    Serial.print("time : ");
+    Serial.print(current_time);
+    Serial.print(", ");
+    Serial.println(ctime(&current_time));
+
+    float vsys = analogRead(A3) * 3.3f / 4096.0f * 3.0f;
+    Serial.println(vsys);
+
     if (digitalRead(CHARGE_STATE) == LOW) {
         // Battery is charging.
         Serial.println("Battery is charging.");
