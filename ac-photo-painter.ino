@@ -43,7 +43,14 @@ const uint32_t VBUS_STATE = 24;    // USB bus power (high means there is power).
 const uint32_t RED_LED = 25;       // Activity LED: red.
 const uint32_t GREEN_LED = 26;     // Power LED: green.
 
+static void set_time(void);
+static void set_alarm_time(int seconds);
+
 void setup() {
+    //
+    // Set up GPIO pins.
+    //
+
     analogReadResolution(12);
 
     pinMode(CHARGE_STATE, INPUT_PULLUP);
@@ -60,25 +67,36 @@ void setup() {
     pinMode(GREEN_LED, OUTPUT);
     digitalWrite(GREEN_LED, HIGH);
 
+    //
+    // Set up the watchdog timer.
+    //
+
+    watchdog_enable(8 * 1000, false);
+
+    //
+    // Set up the RTC.
+    //
+
     Wire1.setSDA(14);
     Wire1.setSCL(15);
     Wire1.begin();
 
-    // Temporary: Set the time.
-    // struct tm now_tm;
-    // now_tm.tm_year = 2025 - 1900;
-    // now_tm.tm_mon = 3 - 1;  // It needs to be '3' if April
-    // now_tm.tm_mday = 27;
-    // now_tm.tm_hour = 22;
-    // now_tm.tm_min = 7;
-    // now_tm.tm_sec = 0;
-    // rtc.set(&now_tm);
+    // TODO(tboldt): Make this dependent on whether the RTC has a valid date. Also, maybe prompt for it?
+    // set_time();
+
+    set_alarm_time(30);
 }
 
 void loop() {
-    time_t current_time = 0;
+    watchdog_update();
 
-    current_time = rtc.time(NULL);
+    // uint8_t data[18];
+    // rtc.reg_r(0, data, 18);
+    // for (int i = 0; i < 18; i++) {
+    //     Serial.printf("%02x: %02x\n", i, data[i]);
+    // }
+
+    time_t current_time = rtc.time(NULL);
     Serial.print("time : ");
     Serial.print(current_time);
     Serial.print(", ");
@@ -124,4 +142,36 @@ void loop() {
     digitalWrite(RED_LED, HIGH);
     digitalWrite(GREEN_LED, LOW);
     delay(1000);
+
+    // Turn off the battery power.
+    digitalWrite(BAT_ENABLE, LOW);
+}
+
+// This is useful to get the RTC time set to a known value.
+static void set_time(void) {
+    struct tm t;
+    t.tm_year = 2025 - 1900;  // Year since 1900
+    t.tm_mon = 3 - 1;         // Month (0-11)
+    t.tm_mday = 29;           // Day of the month (1-31)
+    t.tm_hour = 12;           // Hour (0-23)
+    t.tm_min = 37;            // Minutes (0-59)
+    t.tm_sec = 0;             // Seconds (0-59)
+    rtc.set(&t);
+}
+
+// Set an alarm for some time in the future.
+// Maximum time is 24 hours from now.
+static void set_alarm_time(int seconds) {
+    time_t tt = rtc.time(NULL) + seconds;
+    struct tm* t = localtime(&tt);
+
+    // Note: 0x80 is used to disable a field.
+    rtc.alarm(PCF85063A::WEEKDAY, 0x80);
+    rtc.alarm(PCF85063A::DAY, 0x80);
+    rtc.alarm(PCF85063A::HOUR, t->tm_hour);
+    rtc.alarm(PCF85063A::MINUTE, t->tm_min);
+    rtc.alarm(PCF85063A::SECOND, t->tm_sec);
+
+    // Also, clear any pending alarm.
+    rtc.int_clear();
 }
