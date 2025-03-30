@@ -1,10 +1,9 @@
 #include <Arduino.h>
+#include <GxEPD2_7C.h>
 #include <PCF85063A.h>
 #include <SD.h>
 #include <SPI.h>
 #include <time.h>
-
-PCF85063A rtc(Wire1);
 
 // SD Card pins.
 const uint32_t SDCARD_SCK = 2;
@@ -12,11 +11,22 @@ const uint32_t SDCARD_MISO = 4;
 const uint32_t SDCARD_MOSI = 3;
 const uint32_t SDCARD_CS = 5;
 
+// EPD pins.
+const uint32_t EPD_RST = 12;
+const uint32_t EPD_DC = 8;
+const uint32_t EPD_CS = 9;
+const uint32_t EPD_BUSY = 13;
+const uint32_t EPD_SCK = 10;
+const uint32_t EPD_MOSI = 11;
+const uint32_t EPD_MISO = 12;  // Not used.
+const uint32_t EPD_POWER_EN = 16;
+
 // RTC pins.
+const uint32_t RTC_INT = 6;
 const uint32_t RTC_SDA = 14;
 const uint32_t RTC_SCL = 15;
 
-// General GPIOs.
+// General pins.
 const uint32_t CHARGE_STATE = 17;  // Battery charging indicator (low is charging; high is not charging).
 const uint32_t BAT_ENABLE = 18;    // Battery power control (high is enabled; low turns off the power).
 const uint32_t USER_BUTTON = 19;   // User button (low is button pressed, or the auto-switch is enabled).
@@ -24,12 +34,25 @@ const uint32_t PWR_MODE = 23;      // Power mode (mystery pin).
 const uint32_t VBUS_STATE = 24;    // USB bus power (high means there is power).
 const uint32_t RED_LED = 25;       // Activity LED: red.
 const uint32_t GREEN_LED = 26;     // Power LED: green.
+const uint32_t VSYS_ADC = 29;      // Analog pin for VSYS voltage.
+
+#define GxEPD2_DISPLAY_CLASS GxEPD2_7C
+#define GxEPD2_DRIVER_CLASS GxEPD2_730c_ACeP_730
+#define MAX_DISPLAY_BUFFER_SIZE 5000
+#define MAX_HEIGHT(EPD) \
+    (EPD::HEIGHT <= (MAX_DISPLAY_BUFFER_SIZE) / (EPD::WIDTH / 2) ? EPD::HEIGHT : (MAX_DISPLAY_BUFFER_SIZE) / (EPD::WIDTH / 2))
+GxEPD2_DISPLAY_CLASS<GxEPD2_DRIVER_CLASS, MAX_HEIGHT(GxEPD2_DRIVER_CLASS)> display(GxEPD2_DRIVER_CLASS(EPD_CS, EPD_DC, EPD_RST,
+                                                                                                       EPD_BUSY));
+
+PCF85063A rtc(Wire1);
 
 static void do_period_housekeeping(void);
 static void set_time(void);
 static void set_alarm_time(int seconds);
 static float get_battery_voltage(void);
 static void dump_rtc_regs(void);
+
+static void epd_busy_callback(const void*) { watchdog_update(); }
 
 void setup() {
     //
@@ -83,6 +106,37 @@ void setup() {
     SPI.setSCK(SDCARD_SCK);
     // Don't use hardware CS.
     SPI.begin(false);
+
+    //
+    // Set up E-paper display.
+    //
+
+    // const uint32_t EPD_RST = 12;
+    // const uint32_t EPD_DC = 8;
+    // const uint32_t EPD_CS = 9;
+    // const uint32_t EPD_BUSY = 13;
+    // const uint32_t EPD_POWER_EN = 16;
+
+    SPI1.setMISO(EPD_MISO);
+    SPI1.setMOSI(EPD_MOSI);
+    SPI1.setSCK(EPD_SCK);
+    // Don't use hardware CS.
+    SPI1.begin(false);
+
+    display.epd2.selectSPI(SPI1, SPISettings(4000000, MSBFIRST, SPI_MODE0));
+    // Enable EPD power.
+    pinMode(EPD_POWER_EN, OUTPUT);
+    digitalWrite(EPD_POWER_EN, HIGH);
+
+    display.epd2.setBusyCallback(epd_busy_callback);
+    display.init(115200, true, 2, false);
+
+    display.setFullWindow();
+    display.firstPage();
+    do {
+        watchdog_update();
+        display.fillScreen(GxEPD_WHITE);
+    } while (display.nextPage());
 
     // Let the SD library control the CS PIN.
     SD.begin(SDCARD_CS);
@@ -217,7 +271,7 @@ static void set_alarm_time(int seconds) {
 // Calculate VSYS, assuming a 12-bit ADC, 3.3Vref, and 3x voltage divider.
 // When on battery, VBAT == VSYS.
 static float get_battery_voltage(void) {
-    float vsys = analogRead(A3) * 3.3f / 4096.0f * 3.0f;
+    float vsys = analogRead(VSYS_ADC) * 3.3f / 4096.0f * 3.0f;
     // Serial.printf("VBAT: %f V", vsys);
     // Serial.println();
     return vsys;
