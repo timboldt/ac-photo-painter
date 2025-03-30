@@ -1,9 +1,22 @@
 #include <Arduino.h>
 #include <PCF85063A.h>
+#include <SD.h>
+#include <SPI.h>
 #include <time.h>
 
 PCF85063A rtc(Wire1);
 
+// SD Card pins.
+const uint32_t SDCARD_SCK = 2;
+const uint32_t SDCARD_MISO = 4;
+const uint32_t SDCARD_MOSI = 3;
+const uint32_t SDCARD_CS = 5;
+
+// RTC pins.
+const uint32_t RTC_SDA = 14;
+const uint32_t RTC_SCL = 15;
+
+// General GPIOs.
 const uint32_t CHARGE_STATE = 17;  // Battery charging indicator (low is charging; high is not charging).
 const uint32_t BAT_ENABLE = 18;    // Battery power control (high is enabled; low turns off the power).
 const uint32_t USER_BUTTON = 19;   // User button (low is button pressed, or the auto-switch is enabled).
@@ -52,14 +65,27 @@ void setup() {
     // Set up the RTC.
     //
 
-    Wire1.setSDA(14);
-    Wire1.setSCL(15);
+    Wire1.setSDA(RTC_SDA);
+    Wire1.setSCL(RTC_SCL);
     Wire1.begin();
 
     // TODO(tboldt): Make this dependent on whether the RTC has a valid date. Also, maybe prompt for it?
     // set_time();
 
     set_alarm_time(30);
+
+    //
+    // Set up SD Card.
+    //
+
+    SPI.setMISO(SDCARD_MISO);
+    SPI.setMOSI(SDCARD_MOSI);
+    SPI.setSCK(SDCARD_SCK);
+    // Don't use hardware CS.
+    SPI.begin(false);
+
+    // Let the SD library control the CS PIN.
+    SD.begin(SDCARD_CS);
 }
 
 void loop() {
@@ -68,6 +94,12 @@ void loop() {
     // Turn on activity indicator.
     digitalWrite(RED_LED, HIGH);
     Serial.println("BEGIN WORK");
+
+    if (SD.exists("/")) {
+        Serial.println("Yes it exists.");
+    } else {
+        Serial.println("Nope");
+    }
 
     delay(2000);
 
