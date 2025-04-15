@@ -3,6 +3,7 @@
 #include <SD.h>
 #include <SPI.h>
 #include <time.h>
+
 #include "graphics.h"
 
 // SD Card pins.
@@ -36,8 +37,7 @@ const uint32_t RED_LED = 25;       // Activity LED: red.
 const uint32_t GREEN_LED = 26;     // Power LED: green.
 const uint32_t VSYS_ADC = 29;      // Analog pin for VSYS voltage.
 
-GxEPD2_DISPLAY_CLASS<GxEPD2_DRIVER_CLASS, MAX_HEIGHT(GxEPD2_DRIVER_CLASS)> display(GxEPD2_DRIVER_CLASS(EPD_CS, EPD_DC, EPD_RST,
-                                                                                                       EPD_BUSY));
+GxEPD2_7C<GxEPD2_730c_ACeP_730, GxEPD2_730c_ACeP_730::HEIGHT> display(GxEPD2_DRIVER_CLASS(EPD_CS, EPD_DC, EPD_RST, EPD_BUSY));
 
 PCF85063A rtc(Wire1);
 

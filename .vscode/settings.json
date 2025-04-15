@@ -18,6 +18,27 @@
         "random": "cpp",
         "condition_variable": "cpp",
         "ctime": "cpp",
-        "mutex": "cpp"
-    }
+        "mutex": "cpp",
+        "compare": "cpp",
+        "cstdint": "cpp"
+    },
+    "C_Cpp.default.defines": [
+        "ARDUINO=10807",
+        "ARDUINO_ARCH_RP2040",
+        "ARDUINO_PICO",
+        "USBD_PID=0x000a",
+        "USBD_VID=0x2e8a",
+        "USBD_MAX_POWER_MA=250",
+        "USB_MANUFACTURER=\\\"Raspberry Pi\\\"",
+        "USB_PRODUCT=\\\"Pico\\\"",
+        "LWIP_IPV6=0",
+        "LWIP_IPV4=1",
+        "LWIP_IGMP=1",
+        "LWIP_CHECKSUM_CTRL_PER_NETIF=1",
+        "FILE_COPY_CONSTRUCTOR_SELECT=FILE_COPY_CONSTRUCTOR_PUBLIC",
+        "USE_UTF8_LONG_NAMES=1",
+        "DISABLE_FS_H_WARNING=1",
+        "ARDUINO_VARIANT=\\\"rpipico\\\"",
+        "PICO_FLASH_SIZE_BYTES=2097152"
+    ]
 }
