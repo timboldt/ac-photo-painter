@@ -90,7 +90,7 @@ void setup() {
     // TODO(tboldt): Make this dependent on whether the RTC has a valid date. Also, maybe prompt for it?
     // set_time();
 
-    set_alarm_time(12*60*60);
+    set_alarm_time(4 * 60 * 60);
 
     //
     // Set up SD Card.
@@ -122,6 +122,9 @@ void setup() {
 
     // Let the SD library control the CS PIN.
     SD.begin(SDCARD_CS);
+
+    // Seed the random number generator.
+    randomSeed(get_rand_32());
 }
 
 void loop() {
@@ -138,23 +141,11 @@ void loop() {
     }
 
     const char* images[] = {
-        "/pic/escherlizard_cut_output.bmp",
-        "/pic/renoirparis_scale_output.bmp",
-        "/pic/fantasycastle_scale_output.bmp",
-        "/pic/castleoverhead_scale_output.bmp",
-        "/pic/jacknicholson_scale_output.bmp",
-        "/pic/colorrelativity_scale_output.bmp",
-        "/pic/charlie_cut_output.bmp",
-        "/pic/mountainpathspring_scale_output.bmp",
-        "/pic/chinesebird_cut_output.bmp",
-        "/pic/rembrandttree_scale_output.bmp",
-        "/pic/laurelhardy_cut_output.bmp",
-        "/pic/escherwaterfall_cut_output.bmp",
-        "/pic/charlie_scale_output.bmp"
-    };
-
-    // Seed the random number generator with the current time.
-    randomSeed(millis());
+        "/pic/escherlizard_cut_output.bmp",     "/pic/renoirparis_scale_output.bmp",        "/pic/fantasycastle_scale_output.bmp",
+        "/pic/castleoverhead_scale_output.bmp", "/pic/jacknicholson_scale_output.bmp",      "/pic/colorrelativity_scale_output.bmp",
+        "/pic/charlie_cut_output.bmp",          "/pic/mountainpathspring_scale_output.bmp", "/pic/chinesebird_cut_output.bmp",
+        "/pic/rembrandttree_scale_output.bmp",  "/pic/laurelhardy_cut_output.bmp",          "/pic/escherwaterfall_cut_output.bmp",
+        "/pic/charlie_scale_output.bmp"};
 
     // Select a random image from the array.
     int randomIndex = random(0, sizeof(images) / sizeof(images[0]));
