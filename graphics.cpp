@@ -27,16 +27,18 @@ uint32_t read32(File& f) {
     return result;
 }
 
-void drawBitmapFromSD_Buffered(const char* filename, int16_t x, int16_t y) {
+void drawBitmapFromSD_Buffered(const String& filename, int16_t x, int16_t y) {
     bool valid = false;
     bool flip = true;
 
+    String fullPath = "/pic/" + filename;
+
     Serial.println();
     Serial.print("Loading image '");
-    Serial.print(filename);
+    Serial.print(fullPath);
     Serial.println('\'');
 
-    File file = SD.open(filename);
+    File file = SD.open(fullPath);
     if (!file) {
         Serial.println("File not found");
         return;
@@ -117,7 +119,7 @@ void drawBitmapFromSD_Buffered(const char* filename, int16_t x, int16_t y) {
     }
 }
 
-void draw_bmp(const char* filename) {
+void draw_bmp(const String& filename) {
     drawBitmapFromSD_Buffered(filename, 0, 0);
 
     // display.setFullWindow();

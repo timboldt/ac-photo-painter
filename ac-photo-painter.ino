@@ -41,6 +41,10 @@ GxEPD2_7C<GxEPD2_730c_ACeP_730, GxEPD2_730c_ACeP_730::HEIGHT> display(GxEPD2_DRI
 
 PCF85063A rtc(Wire1);
 
+const size_t MAX_FILENAMES = 128;
+static size_t filename_count = 0;
+static String filenames[MAX_FILENAMES];
+
 static void epd_busy_callback(const void*);
 static void do_period_housekeeping(void);
 static void set_time(void);
@@ -123,6 +127,23 @@ void setup() {
     // Let the SD library control the CS PIN.
     SD.begin(SDCARD_CS);
 
+    File pic_dir = SD.open("/pic");
+    while (filename_count < MAX_FILENAMES) {
+        File entry = pic_dir.openNextFile();
+        if (!entry) {
+            break;
+        }
+        if (!entry.isDirectory()) {
+            String s = String(entry.name());
+            if (s.endsWith(".bmp")) {
+                filenames[filename_count] = s;
+                filename_count++;
+            }
+        }
+        entry.close();
+    }
+    pic_dir.close();
+
     // Seed the random number generator.
     randomSeed(get_rand_32());
 }
@@ -140,18 +161,11 @@ void loop() {
         Serial.println("Nope");
     }
 
-    const char* images[] = {
-        "/pic/escherlizard_cut_output.bmp",     "/pic/renoirparis_scale_output.bmp",        "/pic/fantasycastle_scale_output.bmp",
-        "/pic/castleoverhead_scale_output.bmp", "/pic/jacknicholson_scale_output.bmp",      "/pic/colorrelativity_scale_output.bmp",
-        "/pic/charlie_cut_output.bmp",          "/pic/mountainpathspring_scale_output.bmp", "/pic/chinesebird_cut_output.bmp",
-        "/pic/rembrandttree_scale_output.bmp",  "/pic/laurelhardy_cut_output.bmp",          "/pic/escherwaterfall_cut_output.bmp",
-        "/pic/charlie_scale_output.bmp"};
-
     // Select a random image from the array.
-    int randomIndex = random(0, sizeof(images) / sizeof(images[0]));
+    int randomIndex = random(0, filename_count);
 
     // Display the randomly selected image.
-    draw_bmp(images[randomIndex]);
+    draw_bmp(filenames[randomIndex]);
 
     // Turn off the battery power.
     digitalWrite(BAT_ENABLE, LOW);

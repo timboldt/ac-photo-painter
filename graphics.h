@@ -9,7 +9,7 @@
 
 extern GxEPD2_7C<GxEPD2_730c_ACeP_730, GxEPD2_730c_ACeP_730::HEIGHT> display;
 
-void drawBitmapFromSD_Buffered(const char* filename, int16_t x, int16_t y);
-void draw_bmp(const char* filename);
+void drawBitmapFromSD_Buffered(const String& filename, int16_t x, int16_t y);
+void draw_bmp(const String& filename);
 
 #endif  // GRAPHICS_H
